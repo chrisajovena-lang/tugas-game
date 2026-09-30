@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vector: The Game</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #2c3e50; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #34495e; padding: 25px; border-radius: 12px; text-align: center; width: 320px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        .screen { background: #ecf0f1; color: #2c3e50; padding: 15px; border-radius: 8px; font-size: 28px; font-weight: bold; font-family: monospace; margin: 15px 0; }
+        .info { display: flex; justify-content: space-between; font-weight: bold; color: #bdc3c7; margin-bottom: 10px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        button { background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #c0392b; }
+        .btn-reset { background: #f39c12; width: 100%; margin-bottom: 15px; }
+        .btn-reset:hover { background: #d35400; }
+        .db-box { background: #1a252f; padding: 12px; border-radius: 8px; }
+        input { width: 90%; padding: 8px; border-radius: 4px; border: none; margin: 8px 0; text-align: center; }
+        .btn-save { background: #27ae60; width: 100%; }
+        .btn-save:hover { background: #219150; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2 style="margin-top:0;">Vector: The Game</h2>
+    <div class="info">
+        <span id="lvl">Level: 1</span>
+        <span id="mvs">Langkah: 3</span>
+    </div>
+    <div class="screen" id="disp">[0, 0]</div>
+    <div style="font-weight:bold; margin-bottom:15px;">Target: <span id="goal" style="color:#2ecc71;">[2, 3]</span></div>
+    
+    <div class="btn-grid" id="btns"></div>
+    <button class="btn-reset" onclick="resetLvl()">Reset Level</button>
+
+    <div class="db-box">
+        <div style="font-size:13px; font-weight:bold; color:#2ecc71;">Database Google Sheets</div>
+        <input type="text" id="pName" placeholder="Masukkan Nama Kamu">
+        <button class="btn-save" onclick="saveScore()">Simpan Skor</button>
+    </div>
+</div>
+
+<script>
+    const levels = [
+        { start: [0, 0], goal: [2, 3], moves: 3, ops: [{l: "+ [1, 1]", f: v => [v[0]+1, v[1]+1]}, {l: "+ [0, 1]", f: v => [v[0], v[1]+1]}] },
+        { start: [1, 1], goal: [6, 2], moves: 2, ops: [{l: "+ [2, 0]", f: v => [v[0]+2, v[1]]}, {l: "x 2", f: v => [v[0]*2, v[1]*2]}] },
+        { start: [5, 5], goal: [-1, -1], moves: 3, ops: [{l: "- [2, 2]", f: v => [v[0]-2, v[1]-2]}, {l: "Reverse", f: v => [-v[0], -v[1]]}] },
+        { start: [0, 2], goal: [4, 0], moves: 4, ops: [{l: "+ [2, -1]", f: v => [v[0]+2, v[1]-1]}, {l: "Swap", f: v => [v[1], v[0]]}] }
+    ];
+
+    let cLvl = 0, cur = [0, 0], mLeft = 0;
+
+    function init() {
+        if (cLvl >= levels.length) {
+            document.getElementById("disp").innerText = "WIN!";
+            document.getElementById("btns").innerHTML = "";
+            alert("Selamat! Semua level selesai!");
+            return;
+        }
+        const l = levels[cLvl];
+        cur = [...l.start];
+        mLeft = l.moves;
+        render();
+    }
+
+    function render() {
+        const l = levels[cLvl];
+        document.getElementById("lvl").innerText = "Level: " + (cLvl + 1);
+        document.getElementById("mvs").innerText = "Langkah: " + mLeft;
+        document.getElementById("disp").innerText = "[" + cur[0] + ", " + cur[1] + "]";
+        document.getElementById("goal").innerText = "[" + l.goal[0] + ", " + l.goal[1] + "]";
+
+        const bBox = document.getElementById("btns");
+        bBox.innerHTML = "";
+        l.ops.forEach(op => {
+            const btn = document.createElement("button");
+            btn.innerText = op.l;
+            btn.onclick = () => doOp(op.f);
+            bBox.appendChild(btn);
+        });
+    }
+
+    function doOp(fn) {
+        if (mLeft > 0) {
+            cur = fn(cur);
+            mLeft--;
+            render();
+            check();
+        }
+    }
+
+    function check() {
+        const g = levels[cLvl].goal;
+        if (cur[0] === g[0] && cur[1] === g[1]) {
+            setTimeout(() => { alert("Level Selesai!"); cLvl++; init(); }, 100);
+        } else if (mLeft === 0) {
+            setTimeout(() => { alert("Langkah habis! Coba lagi."); resetLvl(); }, 100);
+        }
+    }
+
+    function resetLvl() { init(); }
+
+    function saveScore() {
+        const name = document.getElementById("pName").value;
+        if (!name) { alert("Masukkan nama kamu!"); return; }
+        alert("Skor " + name + " (Level " + (cLvl + 1) + ") berhasil dicatat!");
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
